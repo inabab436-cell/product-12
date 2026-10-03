@@ -9,7 +9,7 @@
 import { createHmac, randomInt } from "crypto";
 
 import { getSupabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendAgentMail } from "@/lib/agentmail.server";
+import { sendEmailJsCode } from "@/lib/emailjs.server";
 import {
   ATTEMPT_LIMITS,
   SEND_LIMITS,
@@ -185,12 +185,7 @@ export async function sendOtp(
 
   // 5. Send the email.
   try {
-    await sendAgentMail({
-      to: email,
-      subject: subjectFor(purpose),
-      html: emailHtml(code, purpose),
-      text: emailText(code, purpose),
-    });
+    await sendEmailJsCode({ to: email, code, purpose });
   } catch {
     return {
       ok: false,
