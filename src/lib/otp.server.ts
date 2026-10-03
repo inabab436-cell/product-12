@@ -9,7 +9,7 @@
 import { createHmac, randomInt } from "crypto";
 
 import { getSupabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendEmail } from "@/lib/resend.server";
+import { sendAgentMail } from "@/lib/agentmail.server";
 import {
   ATTEMPT_LIMITS,
   SEND_LIMITS,
@@ -23,9 +23,6 @@ const SEND_COOLDOWN_MS = 60 * 1000;
 const WINDOW_MS = 30 * 60 * 1000;
 const BLOCK_MS = 30 * 60 * 1000;
 
-// Shared Resend "onboarding" sender works out of the box. To deliver to
-// arbitrary end-user inboxes, a verified domain must be configured in Resend.
-const FROM = "cupai <onboarding@resend.dev>";
 
 function pepper(): string {
   const secret = process.env.CUPAI_APP_SESSION_SECRET;
@@ -188,8 +185,7 @@ export async function sendOtp(
 
   // 5. Send the email.
   try {
-    await sendEmail({
-      from: FROM,
+    await sendAgentMail({
       to: email,
       subject: subjectFor(purpose),
       html: emailHtml(code, purpose),
