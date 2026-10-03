@@ -9,7 +9,7 @@
 import { createHmac, randomInt } from "crypto";
 
 import { getSupabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendAgentMail } from "@/lib/agentmail.server";
+import { sendEmailJsCode } from "@/lib/emailjs.server";
 import {
   ATTEMPT_LIMITS,
   SEND_LIMITS,
@@ -68,30 +68,8 @@ async function getActiveBlock(
   return (data?.blocked_until as string | undefined) ?? null;
 }
 
-function subjectFor(purpose: OtpPurpose): string {
-  return purpose === "signup"
-    ? "Your cupai verification code"
-    : "Your cupai password reset code";
-}
+// Email subject/body live in the EmailJS dashboard templates (see emailjs.server.ts).
 
-function emailText(code: string, purpose: OtpPurpose): string {
-  const action =
-    purpose === "signup" ? "verify your email address" : "reset your password";
-  return `Your cupai code is ${code}. Use it to ${action}. This code is valid for 10 minutes. If you did not request this, you can ignore this email.`;
-}
-
-function emailHtml(code: string, purpose: OtpPurpose): string {
-  const action =
-    purpose === "signup" ? "verify your email address" : "reset your password";
-  return `
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#0f172a">
-    <h2 style="margin:0 0 12px">cupai</h2>
-    <p style="margin:0 0 16px;font-size:15px">Use the code below to ${action}.</p>
-    <div style="font-size:32px;font-weight:700;letter-spacing:8px;background:#f1f5f9;border-radius:8px;padding:16px;text-align:center;margin:0 0 16px">${code}</div>
-    <p style="margin:0 0 8px;font-size:13px;color:#475569">This code is valid for 10 minutes.</p>
-    <p style="margin:0;font-size:13px;color:#475569">If you did not request this, you can safely ignore this email.</p>
-  </div>`;
-}
 
 /** Send an OTP code, enforcing cooldown, per-window send caps, and blocks. */
 export async function sendOtp(
@@ -185,12 +163,7 @@ export async function sendOtp(
 
   // 5. Send the email.
   try {
-    await sendAgentMail({
-      to: email,
-      subject: subjectFor(purpose),
-      html: emailHtml(code, purpose),
-      text: emailText(code, purpose),
-    });
+    await sendEmailJsCode({ to: email, code, purpose });
   } catch {
     return {
       ok: false,
