@@ -16,6 +16,11 @@ function cleanEmail(v: unknown): string {
   }
   return s;
 }
+function cleanName(v: unknown): string {
+  const s = String(v ?? "").trim().replace(/\s+/g, " ");
+  if (s.length < 2 || s.length > 80) throw new Error("الاسم يجب أن يكون بين 2 و80 حرفًا.");
+  return s;
+}
 function cleanCode(v: unknown): string {
   const s = String(v ?? "").trim();
   if (!/^\d{6}$/.test(s)) throw new Error("الرمز يجب أن يكون 6 أرقام.");
@@ -71,7 +76,8 @@ export const requestSignupCode = createServerFn({ method: "POST" })
   });
 
 export const completeSignup = createServerFn({ method: "POST" })
-  .inputValidator((d: { email: string; code: string; password: string }) => ({
+  .inputValidator((d: { name: string; email: string; code: string; password: string }) => ({
+    name: cleanName(d?.name),
     email: cleanEmail(d?.email),
     code: cleanCode(d?.code),
     password: cleanPassword(d?.password),
@@ -91,6 +97,7 @@ export const completeSignup = createServerFn({ method: "POST" })
       email: data.email,
       password: data.password,
       email_confirm: true,
+      user_metadata: { full_name: data.name },
     });
     if (error || !created.user) return { ok: false, message: "تعذّر إنشاء الحساب." };
     return startMerchantSession(created.user.id, data.email);

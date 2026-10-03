@@ -38,6 +38,7 @@ function LoginPage() {
 
   const [mode, setMode] = useState<Mode>("login");
   const [codeSent, setCodeSent] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -49,7 +50,6 @@ function LoginPage() {
     setMode(m);
     setCodeSent(false);
     setCode("");
-    setPassword("");
     setError(null);
     setInfo(null);
   }
@@ -85,8 +85,11 @@ function LoginPage() {
         setInfo(r.message);
         setCodeSent(true);
       } else {
-        const payload = { data: { email, code, password } };
-        go(mode === "signup" ? await finishSignup(payload) : await finishReset(payload));
+        go(
+          mode === "signup"
+            ? await finishSignup({ data: { name, email, code, password } })
+            : await finishReset({ data: { email, code, password } }),
+        );
       }
     });
   };
@@ -120,6 +123,21 @@ function LoginPage() {
       subtitle={codeSent ? `أدخل الرمز المرسل إلى ${email}` : "مرحبًا بك في كيوباي"}
     >
       <form onSubmit={onSubmit} className="space-y-4" dir="rtl">
+        {mode === "signup" ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="name">الاسم</Label>
+            <Input
+              id="name"
+              autoComplete="name"
+              required
+              minLength={2}
+              maxLength={80}
+              disabled={codeSent}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+        ) : null}
         <div className="space-y-1.5">
           <Label htmlFor="email">البريد الإلكتروني</Label>
           <Input
@@ -152,10 +170,14 @@ function LoginPage() {
           </>
         ) : null}
 
-        {mode === "login" || codeSent ? (
+        {mode !== "reset" || codeSent ? (
           <div className="space-y-1.5">
             <Label htmlFor="password">
-              {mode === "login" ? "كلمة المرور" : "كلمة المرور الجديدة (8 أحرف على الأقل)"}
+              {mode === "login"
+                ? "كلمة المرور"
+                : mode === "signup"
+                  ? "كلمة المرور (8 أحرف على الأقل)"
+                  : "كلمة المرور الجديدة (8 أحرف على الأقل)"}
             </Label>
             <Input
               id="password"
@@ -163,6 +185,7 @@ function LoginPage() {
               dir="ltr"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               required
+              disabled={mode === "signup" && codeSent}
               minLength={mode === "login" ? 1 : 8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
