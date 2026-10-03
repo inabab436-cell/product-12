@@ -8,8 +8,8 @@ export async function sendAgentMail(input: {
   text: string;
   html: string;
 }): Promise<void> {
-  const apiKey = process.env.AGENTMAIL_API_KEY;
-  const inbox = process.env.AGENTMAIL_INBOX_ID;
+  const apiKey = process.env.AGENTMAIL_API_KEY?.trim().replace(/^bearer\s+/i, "");
+  const inbox = process.env.AGENTMAIL_INBOX_ID?.trim();
   if (!apiKey) throw new Error("Missing required environment variable: AGENTMAIL_API_KEY");
   if (!inbox) throw new Error("Missing required environment variable: AGENTMAIL_INBOX_ID");
 
