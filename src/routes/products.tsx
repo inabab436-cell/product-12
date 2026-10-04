@@ -282,7 +282,7 @@ function VariantGrid({ product, sales }: { product: WebsiteProductDTO; sales: Pr
             </span>
             <span className="flex shrink-0 flex-col items-end leading-tight">
               <span className={`inv-num font-bold ${low ? "text-inv-warn" : ""}`}>{qty ?? "—"}</span>
-              {sold > 0 && <span className="text-[9px] text-muted-foreground">بيع {sold}</span>}
+              {sold > 0 && <span className="text-[9px] text-muted-foreground">مُباع {sold}</span>}
             </span>
           </div>
         );
