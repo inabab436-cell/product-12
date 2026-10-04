@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Package, Truck, PhoneCall, ArrowLeft, CreditCard,
-  ShoppingBag, BadgePercent, MessagesSquare, MailCheck, LayoutGrid,
+  ShoppingBag, BadgePercent, MessagesSquare, LayoutGrid,
 } from "lucide-react";
 
 import { HubTabBar } from "@/components/hub/hub-shell";
@@ -129,20 +129,6 @@ function DashboardPage() {
             </section>
           )}
 
-          <div className="grid items-start gap-6 lg:max-w-md">
-            <section>
-              <h2 className="mb-3 text-sm font-bold">إدارة الحساب</h2>
-              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
-                {(
-                  <Link to="/settings/notifications" className="flex items-center gap-3 p-4 transition-colors hover:bg-muted/60">
-                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-muted text-foreground"><MailCheck className="h-[18px] w-[18px]" /></span>
-                    <span className="min-w-0 flex-1 text-sm font-semibold">إشعارات البريد</span>
-                    <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                )}
-              </div>
-            </section>
-          </div>
         </main>
       </div>
 
