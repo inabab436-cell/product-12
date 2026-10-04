@@ -1,8 +1,8 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Package, ChevronDown, ChevronUp, Plus, Trash2, Loader2, ImageOff, ImagePlus, X, Pencil, Layers, TrendingUp, Boxes, Wallet, PackagePlus } from "lucide-react";
+import { Package, ChevronDown, MoreVertical, Plus, Trash2, Loader2, ImageOff, ImagePlus, X, Pencil, PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { PageShell, PageHero, SurfaceCard } from "@/components/layout/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   listWebsiteProducts, setProductPublished, uploadProductImage,
   upsertWebsiteProduct, deleteWebsiteProduct, deleteProductImage,
@@ -61,29 +62,6 @@ function totalQty(p: WebsiteProductDTO) {
   return { qty, known };
 }
 
-/** Compact summary tile above the table. */
-function StatTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <SurfaceCard className="flex items-center gap-3 p-4">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-brand text-primary-foreground shadow-glow">
-        {icon}
-      </span>
-      <span className="flex flex-col">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
-        <span className="text-lg font-bold leading-tight">{value}</span>
-      </span>
-    </SurfaceCard>
-  );
-}
-
 function ProductsPage() {
   const qc = useQueryClient();
   
@@ -122,289 +100,158 @@ function ProductsPage() {
 
 
   const rows = q.data ?? [];
+  const totalStock = rows.reduce((n, p) => n + totalQty(p).qty, 0);
+  const totalSold = Array.from(salesById.values()).reduce((n, s) => n + s.sold, 0);
 
   return (
     <PageShell>
-      <PageHero
-        eyebrow="إدارة المخزون"
-        icon={<Package className="h-3.5 w-3.5" />}
-        title="كل"
-        highlight="منتجاتك"
-        description="جدول موحّد لكل منتجاتك مع جدول فرعي لصور الألوان والمقاسات. اضغط على السهم لتوسيع أي منتج."
-        actions={
-          <div className="flex gap-2">
-            <Button onClick={() => setAddOpen(true)} className="bg-gradient-brand text-primary-foreground shadow-glow">
-              <Plus className="ml-1 h-4 w-4" />
-              إضافة منتج
-            </Button>
-          </div>
-        }
-      />
-
-      <AddProductDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onCreated={() => {
-          setAddOpen(false);
-          toast.success("تم إضافة المنتج إلى المخزون.");
-          qc.invalidateQueries({ queryKey: ["website-products"] });
-        }}
-      />
-
-      <EditProductDialog
-        product={rows.find((p) => p.id === editingId) ?? null}
-        onOpenChange={(v) => { if (!v) setEditingId(null); }}
-        onSaved={() => {
-          setEditingId(null);
-          toast.success("تم حفظ التعديلات.");
-          qc.invalidateQueries({ queryKey: ["website-products"] });
-        }}
-      />
-
-      <QuickStockDialog
-        target={quickStock}
-        onOpenChange={(open) => { if (!open) setQuickStock(null); }}
-        onSaved={() => {
-          setQuickStock(null);
-          qc.invalidateQueries({ queryKey: ["website-products"] });
-        }}
-      />
-
-
-
-
-      {q.isLoading ? (
-        <SurfaceCard className="p-10 text-center text-sm text-muted-foreground">جاري التحميل...</SurfaceCard>
-      ) : rows.length === 0 ? (
-        <SurfaceCard className="p-12 text-center">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-brand text-primary-foreground shadow-glow">
-            <Package className="h-6 w-6" />
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            لا توجد منتجات بعد. أضف منتجك الأول يدويًا للبدء.
+      <div className="inventory-navy -mx-4 -mt-6 min-h-[70vh] space-y-4 bg-background px-4 pb-4 pt-5">
+        <header className="min-w-0">
+          <h1 className="inv-title text-2xl font-bold">كل منتجاتك</h1>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            تابع كمياتك وأسعارك، واضغط على أي منتج لرؤية ألوانه ومقاساته.
           </p>
-          <Button className="mt-5" onClick={() => setAddOpen(true)}>
-            <Plus className="ml-1 h-4 w-4" />إضافة منتج
-          </Button>
-        </SurfaceCard>
-      ) : (
-        <>
-          <div className="mb-4 grid gap-3 sm:grid-cols-3">
-            <StatTile
-              icon={<Package className="h-4 w-4" />}
-              label="عدد المنتجات"
-              value={String(rows.length)}
-            />
-            <StatTile
-              icon={<Boxes className="h-4 w-4" />}
-              label="إجمالي الكميات"
-              value={String(rows.reduce((n, p) => n + totalQty(p).qty, 0))}
-            />
-            <StatTile
-              icon={<TrendingUp className="h-4 w-4" />}
-              label="إجمالي المُباع"
-              value={String(salesById.size === 0 ? 0 : Array.from(salesById.values()).reduce((n, s) => n + s.sold, 0))}
-            />
-          </div>
+        </header>
 
-          <SurfaceCard className="overflow-hidden p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className="w-10 px-3 py-3"></th>
-                    <th className="px-4 py-3">المنتج</th>
-                    <th className="px-4 py-3">السعر</th>
-                    <th className="px-4 py-3">الكمية</th>
-                    <th className="px-4 py-3">المُباع</th>
-                    <th className="px-4 py-3">المتبقي</th>
-                    <th className="px-4 py-3">الألوان / المقاسات</th>
-                    <th className="px-4 py-3">أضيف في</th>
-                    <th className="px-4 py-3">إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {rows.map((p) => {
-                    const isOpen = expanded[p.id] === true;
-                    const canExpand =
-                      p.variants.length > 0 || p.colors.length > 0 || p.sizes.length > 0;
-                    const firstImg = p.images[0];
-                    const sales = salesById.get(p.id);
-                    // Stored variant quantities are ALREADY the remaining stock
-                    // (paid orders deduct it), so the total ever available is
-                    // remaining + sold — never remaining minus sold.
-                    const { qty: remainingQty, known: qtyKnown } = totalQty(p);
-                    const sold = sales?.sold ?? 0;
-                    const remaining = qtyKnown ? remainingQty : null;
-                    const qty = remainingQty + sold;
-                    const pct = qty > 0 ? Math.min(100, Math.round((sold / qty) * 100)) : 0;
-                    return (
-                      <Fragment key={p.id}>
-                        <tr
-                          className={`transition hover:bg-muted/30 ${isOpen ? "bg-muted/20" : ""}`}
-                        >
-                          <td className="px-2 py-3 align-middle">
-                            {canExpand ? (
-                              <button
-                                onClick={() => setExpanded((prev) => ({ ...prev, [p.id]: !isOpen }))}
-                                className={`grid h-7 w-7 place-items-center rounded-lg border transition ${
-                                  isOpen
-                                    ? "border-primary/50 bg-primary/10 text-primary"
-                                    : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
-                                }`}
-                                aria-label={isOpen ? "طي" : "توسيع"}
-                              >
-                                {isOpen ? (
-                                  <ChevronUp className="h-3.5 w-3.5" />
-                                ) : (
-                                  <ChevronDown className="h-3.5 w-3.5" />
-                                )}
+        <Button
+          onClick={() => setAddOpen(true)}
+          className="h-12 w-full gap-2 rounded-xl text-base font-bold shadow-card active:scale-[0.98]"
+        >
+          <Plus className="h-5 w-5" />
+          إضافة منتج جديد
+        </Button>
+
+        <AddProductDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          onCreated={() => {
+            setAddOpen(false);
+            toast.success("تم إضافة المنتج إلى المخزون.");
+            qc.invalidateQueries({ queryKey: ["website-products"] });
+          }}
+        />
+        <EditProductDialog
+          product={rows.find((p) => p.id === editingId) ?? null}
+          onOpenChange={(v) => { if (!v) setEditingId(null); }}
+          onSaved={() => {
+            setEditingId(null);
+            toast.success("تم حفظ التعديلات.");
+            qc.invalidateQueries({ queryKey: ["website-products"] });
+          }}
+        />
+        <QuickStockDialog
+          target={quickStock}
+          onOpenChange={(open) => { if (!open) setQuickStock(null); }}
+          onSaved={() => {
+            setQuickStock(null);
+            qc.invalidateQueries({ queryKey: ["website-products"] });
+          }}
+        />
+
+        {q.isLoading ? (
+          <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">جاري التحميل...</div>
+        ) : rows.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card p-10 text-center">
+            <Package className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm text-muted-foreground">لا توجد منتجات بعد. أضف منتجك الأول من الزر بالأعلى.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <StatTile label="عدد المنتجات" value={String(rows.length)} />
+              <StatTile label="إجمالي الكميات" value={String(totalStock)} />
+              <StatTile label="إجمالي المُباع" value={String(totalSold)} accent />
+            </div>
+
+            <div className="space-y-3">
+              {rows.map((p) => {
+                const isOpen = expanded[p.id] === true;
+                const firstImg = p.images[0];
+                const sales = salesById.get(p.id);
+                const { qty: remainingQty, known: qtyKnown } = totalQty(p);
+                const low = qtyKnown && remainingQty <= 3;
+                return (
+                  <article key={p.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                    <div className="flex gap-3 p-3">
+                      {firstImg ? (
+                        <img src={firstImg.url} alt={p.name} loading="lazy"
+                          className="h-20 w-20 shrink-0 rounded-lg bg-muted object-cover" />
+                      ) : (
+                        <div className="grid h-20 w-20 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                          <ImageOff className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div className="flex min-w-0 flex-1 flex-col justify-between">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                          <div className="min-w-0">
+                            <h3 className="line-clamp-2 text-sm font-bold leading-snug">{p.name}</h3>
+                            {p.price != null && (
+                              <p className="inv-num mt-0.5 text-sm font-bold text-primary">
+                                {p.price} {p.currency ?? ""}
+                              </p>
+                            )}
+                          </div>
+                          <DropdownMenu dir="rtl">
+                            <DropdownMenuTrigger asChild>
+                              <button type="button" aria-label="خيارات المنتج"
+                                className="-m-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted">
+                                <MoreVertical className="h-5 w-5" />
                               </button>
-                            ) : null}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              {firstImg ? (
-                                <img
-                                  src={firstImg.url}
-                                  alt={p.name}
-                                  className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-border/60 shadow-card"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
-                                  <ImageOff className="h-4 w-4" />
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="font-semibold">{p.name}</span>
-                                </div>
-                                {p.description && (
-                                  <div className="line-clamp-1 max-w-[22ch] text-xs text-muted-foreground">
-                                    {p.description}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3">
-                            {p.price != null ? (
-                              <span className="inline-flex items-center gap-1 font-semibold">
-                                <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-gradient-brand">
-                                  {p.price} {p.currency ?? ""}
-                                </span>
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3">
-                            {qtyKnown ? (
-                              <span className="inline-flex flex-col">
-                                <span className="font-bold">{qty}</span>
-                                <span className="text-[10px] text-muted-foreground">
-                                  إجمالي كل المتغيّرات
-                                </span>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">غير محدّد</span>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3">
-                            <div className="flex flex-col gap-1">
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                                <TrendingUp className="h-3 w-3" />
-                                {sold} قطعة
-                              </span>
-                              <span className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
-                                <span
-                                  className="block h-full rounded-full bg-gradient-brand"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </span>
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-xs">
-                            <StockPill remaining={remaining} />
-                          </td>
-                          <td className="px-4 py-3 text-xs">
-                            <div className="flex flex-wrap items-center gap-1">
-                              {p.colors.slice(0, 3).map((c) => (
-                                <span
-                                  key={c.id}
-                                  className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background px-2 py-0.5"
-                                >
-                                  {c.hex && (
-                                    <span
-                                      className="h-2.5 w-2.5 rounded-full border border-border/60"
-                                      style={{ background: c.hex }}
-                                    />
-                                  )}
-                                  {c.label}
-                                </span>
-                              ))}
-                              {p.colors.length > 3 && (
-                                <span className="text-muted-foreground">+{p.colors.length - 3}</span>
-                              )}
-                              {p.sizes.length > 0 && (
-                                <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                                  {p.sizes.map((s) => s.label).join(" · ")}
-                                </span>
-                              )}
-                              {p.colors.length === 0 && p.sizes.length === 0 && (
-                                <span className="text-muted-foreground">—</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                            {new Date(p.created_at).toLocaleDateString("ar-EG")}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="icon" variant="secondary" title="تزويد المخزون"
-                                onClick={() => setQuickStock({ product: p, variantIndex: 0 })}
-                              >
-                                <PackagePlus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon" variant="outline" title="تعديل"
-                                onClick={() => setEditingId(p.id)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon" variant="ghost" title="حذف"
-                                className="text-destructive hover:text-destructive"
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-40">
+                              <DropdownMenuItem onClick={() => setQuickStock({ product: p, variantIndex: 0 })}>
+                                <PackagePlus className="ml-2 h-4 w-4" />تزويد المخزون
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEditingId(p.id)}>
+                                <Pencil className="ml-2 h-4 w-4" />تعديل
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
                                 disabled={delMut.isPending}
                                 onClick={() => {
                                   if (window.confirm(`حذف المنتج "${p.name}" نهائياً؟`)) delMut.mutate(p.id);
                                 }}
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        {isOpen && (
-                          <tr className="bg-muted/20">
-                            <td colSpan={10} className="p-0">
-                              <VariantSubTable product={p} sales={sales} onAddStock={(variantIndex) => setQuickStock({ product: p, variantIndex })} />
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
+                                <Trash2 className="ml-2 h-4 w-4" />حذف
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <span className={`inv-num rounded-md px-2 py-0.5 text-[11px] font-semibold ${low ? "bg-inv-warn-soft text-inv-warn" : "bg-muted text-muted-foreground"}`}>
+                            {qtyKnown ? (remainingQty === 0 ? "نفدت الكمية" : `المتبقي: ${remainingQty}`) : "الكمية غير محدّدة"}
+                          </span>
+                          {p.variants.length > 0 && (
+                            <button type="button"
+                              onClick={() => setExpanded((prev) => ({ ...prev, [p.id]: !isOpen }))}
+                              className="flex items-center gap-1 text-xs font-medium"
+                              aria-expanded={isOpen}>
+                              التفاصيل
+                              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {isOpen && <VariantGrid product={p} sales={sales} />}
+                  </article>
+                );
+              })}
             </div>
-          </SurfaceCard>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </PageShell>
+  );
+}
+
+/** Compact stat tile — three sit side by side on a phone. */
+function StatTile({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 text-center">
+      <p className="mb-1 text-[10px] text-muted-foreground">{label}</p>
+      <p className={`inv-num text-lg font-bold ${accent ? "text-primary" : ""}`}>{value}</p>
+    </div>
   );
 }
 
@@ -414,136 +261,32 @@ function vKey(color: unknown, size: unknown) {
   return `${n(color)}|${n(size)}`;
 }
 
-/** Inner table: one row per colour + size with quantity, sold, remaining and images. */
-function VariantSubTable({
-  product,
-  sales,
-  onAddStock,
-}: {
-  product: WebsiteProductDTO;
-  sales: ProductSalesDTO | undefined;
-  onAddStock: (variantIndex: number) => void;
-}) {
-  const byColorId = new Map<string, typeof product.images>();
-  const bySizeId = new Map<string, typeof product.images>();
-  const generic: typeof product.images = [];
-  for (const img of product.images) {
-    if (img.color_id) {
-      const arr = byColorId.get(img.color_id) ?? [];
-      arr.push(img);
-      byColorId.set(img.color_id, arr);
-    } else if (img.size_id) {
-      const arr = bySizeId.get(img.size_id) ?? [];
-      arr.push(img);
-      bySizeId.set(img.size_id, arr);
-    } else {
-      generic.push(img);
-    }
-  }
-
-  const colorByLabel = new Map(
-    product.colors.map((c) => [String(c.label ?? "").trim().toLocaleLowerCase("ar"), c]),
-  );
-  const sizeByLabel = new Map(
-    product.sizes.map((s) => [String(s.label ?? "").trim().toLocaleLowerCase("ar"), s]),
+/** Expanded variants: one chip per colour + size with remaining stock. */
+function VariantGrid({ product, sales }: { product: WebsiteProductDTO; sales: ProductSalesDTO | undefined }) {
+  const hexByLabel = new Map(
+    product.colors.map((c) => [String(c.label ?? "").trim().toLocaleLowerCase("ar"), c.hex]),
   );
   const soldByVariant = new Map((sales?.variants ?? []).map((v) => [vKey(v.color, v.size), v.sold]));
-
-  const rows = product.variants.map((v, i) => {
-    const color = colorByLabel.get(String(v.color ?? "").trim().toLocaleLowerCase("ar"));
-    const size = sizeByLabel.get(String(v.size ?? "").trim().toLocaleLowerCase("ar"));
-    const imgs =
-      (color ? byColorId.get(color.id) : undefined) ??
-      (size ? bySizeId.get(size.id) : undefined) ??
-      generic;
-    const sold = soldByVariant.get(vKey(v.color, v.size)) ?? 0;
-    const qty = v.quantity != null && Number.isFinite(Number(v.quantity)) ? Number(v.quantity) : null;
-    return { key: `v-${i}`, label: v.color, hex: color?.hex ?? null, size: v.size, qty, sold, imgs };
-  });
-
   return (
-    <div className="border-r-4 border-primary/60 bg-background/60 p-4 sm:p-5">
-      <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-        <Layers className="h-3.5 w-3.5 text-primary" />
-        تفاصيل المتغيّرات — لون × مقاس
-      </div>
-      <div className="overflow-x-auto rounded-xl border border-border/60 bg-background/80">
-        <table className="w-full text-right text-xs">
-          <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2">اللون</th>
-              <th className="px-3 py-2">المقاس</th>
-              <th className="px-3 py-2">الكمية</th>
-              <th className="px-3 py-2">المُباع</th>
-              <th className="px-3 py-2">المتبقي</th>
-              <th className="px-3 py-2">الصور</th>
-              <th className="px-3 py-2">إضافة</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/60">
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-4 text-center text-muted-foreground">
-                  لا توجد متغيّرات مسجّلة لهذا المنتج.
-                </td>
-              </tr>
-            )}
-            {rows.map((r) => {
-              // r.qty is remaining stock already; total = remaining + sold.
-              const remaining = r.qty == null ? null : Math.max(0, r.qty);
-              const totalEver = r.qty == null ? null : r.qty + r.sold;
-              return (
-                <tr key={r.key} className="transition hover:bg-muted/30">
-                  <td className="whitespace-nowrap px-3 py-2">
-                    {r.label ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
-                        {r.hex && (
-                          <span
-                            className="h-2.5 w-2.5 rounded-full border border-border/60"
-                            style={{ background: r.hex }}
-                          />
-                        )}
-                        {r.label}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    {r.size ? (
-                      <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[11px]">
-                        {r.size}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 font-semibold">
-                    {totalEver ?? <span className="text-muted-foreground">غير محدّد</span>}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-                      <TrendingUp className="h-2.5 w-2.5" />
-                      {r.sold}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    <StockPill remaining={remaining} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <ImageStrip imgs={r.imgs} label={r.label ?? undefined} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <Button size="sm" variant="secondary" className="gap-1" onClick={() => onAddStock(Number(r.key.slice(2)))}>
-                      <Plus className="h-3.5 w-3.5" /> كمية
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="grid grid-cols-2 gap-2 border-t border-border bg-muted/60 px-3 py-2.5">
+      {product.variants.map((v, i) => {
+        const qty = v.quantity != null && Number.isFinite(Number(v.quantity)) ? Number(v.quantity) : null;
+        const hex = hexByLabel.get(String(v.color ?? "").trim().toLocaleLowerCase("ar"));
+        const sold = soldByVariant.get(vKey(v.color, v.size)) ?? 0;
+        const low = qty != null && qty <= 3;
+        return (
+          <div key={i} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-card p-2 text-[11px]">
+            <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+              {hex && <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-border" style={{ background: hex }} />}
+              <span className="truncate">{[v.color, v.size].filter(Boolean).join(" / ") || "أساسي"}</span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end leading-tight">
+              <span className={`inv-num font-bold ${low ? "text-inv-warn" : ""}`}>{qty ?? "—"}</span>
+              {sold > 0 && <span className="text-[9px] text-muted-foreground">مُباع {sold}</span>}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -630,47 +373,6 @@ function QuickStockDialog({
   );
 }
 
-/** Colour-coded remaining-stock badge; `null` means the quantity was never set. */
-function StockPill({ remaining }: { remaining: number | null }) {
-  if (remaining == null) {
-    return <span className="text-xs text-muted-foreground">غير محدّد</span>;
-  }
-  const tone =
-    remaining === 0
-      ? "border-destructive/30 bg-destructive/10 text-destructive"
-      : remaining <= 3
-        ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
-        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600";
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${tone}`}>
-      {remaining === 0 ? "نفدت" : remaining}
-    </span>
-  );
-}
-
-
-function ImageStrip({ imgs, label }: { imgs: WebsiteProductDTO["images"]; label?: string }) {
-  if (imgs.length === 0) return <span className="text-muted-foreground">—</span>;
-  return (
-    <div className="flex flex-wrap gap-2">
-      {imgs.map((img) => (
-        <div key={img.id} className="flex flex-col items-center gap-1">
-          <img
-            src={img.url}
-            alt={label ?? ""}
-            className="h-14 w-14 rounded-lg border border-border/60 object-cover shadow-card"
-            loading="lazy"
-          />
-          {label && (
-            <span className="max-w-[80px] truncate text-[10px] text-muted-foreground" title={label}>
-              {label}
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Manual Add Product dialog — creates a staging_products row inside a fresh

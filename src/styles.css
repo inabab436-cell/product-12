@@ -452,6 +452,32 @@
 }
 
 /* ============================================================
+   INVENTORY — calm navy mobile feed. Scoped under .inventory-navy;
+   nothing here leaks to the wider hub theme.
+   ============================================================ */
+.inventory-navy {
+  --background: oklch(0.975 0.005 247);           /* #f5f7fa */
+  --foreground: oklch(0.27 0.045 240);            /* #0f2a3d */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.27 0.045 240);
+  --primary: oklch(0.62 0.1 182);                 /* #2a9d8f */
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.96 0.006 247);
+  --muted-foreground: oklch(0.55 0.02 245);
+  --border: oklch(0.93 0.008 247);
+  --inv-warn: oklch(0.67 0.15 40);                /* #e76f51 */
+  --inv-warn-soft: oklch(0.95 0.03 40);
+  --inv-ok-soft: oklch(0.95 0.03 182);
+  font-family: "IBM Plex Sans Arabic", "Manrope", sans-serif;
+  color: var(--foreground);
+}
+.inventory-navy .inv-num { font-family: "Manrope", "IBM Plex Sans Arabic", sans-serif; }
+.inventory-navy .inv-title { font-family: "Sora", "IBM Plex Sans Arabic", sans-serif; }
+@utility text-inv-warn { color: var(--inv-warn); }
+@utility bg-inv-warn-soft { background-color: var(--inv-warn-soft); }
+@utility bg-inv-ok-soft { background-color: var(--inv-ok-soft); }
+
+/* ============================================================
    OFFERS — calm geometric teal redesign (direction "لوحة تركواز
    هندسية"). Scoped under .offers-teal inside the dashboard; nothing
    here leaks to the wider hub theme.
