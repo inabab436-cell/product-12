@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Package, ChevronDown, MoreVertical, Plus, Trash2, Loader2, ImageOff, ImagePlus, X, Pencil, Layers, TrendingUp, Boxes, Wallet, PackagePlus } from "lucide-react";
+import { Package, ChevronDown, MoreVertical, Plus, Trash2, Loader2, ImageOff, ImagePlus, X, Pencil, PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -373,47 +373,6 @@ function QuickStockDialog({
   );
 }
 
-/** Colour-coded remaining-stock badge; `null` means the quantity was never set. */
-function StockPill({ remaining }: { remaining: number | null }) {
-  if (remaining == null) {
-    return <span className="text-xs text-muted-foreground">غير محدّد</span>;
-  }
-  const tone =
-    remaining === 0
-      ? "border-destructive/30 bg-destructive/10 text-destructive"
-      : remaining <= 3
-        ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
-        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600";
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${tone}`}>
-      {remaining === 0 ? "نفدت" : remaining}
-    </span>
-  );
-}
-
-
-function ImageStrip({ imgs, label }: { imgs: WebsiteProductDTO["images"]; label?: string }) {
-  if (imgs.length === 0) return <span className="text-muted-foreground">—</span>;
-  return (
-    <div className="flex flex-wrap gap-2">
-      {imgs.map((img) => (
-        <div key={img.id} className="flex flex-col items-center gap-1">
-          <img
-            src={img.url}
-            alt={label ?? ""}
-            className="h-14 w-14 rounded-lg border border-border/60 object-cover shadow-card"
-            loading="lazy"
-          />
-          {label && (
-            <span className="max-w-[80px] truncate text-[10px] text-muted-foreground" title={label}>
-              {label}
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Manual Add Product dialog — creates a staging_products row inside a fresh
