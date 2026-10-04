@@ -1,8 +1,8 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Package, ChevronDown, ChevronUp, Plus, Trash2, Loader2, ImageOff, ImagePlus, X, Pencil, Layers, TrendingUp, Boxes, Wallet, PackagePlus } from "lucide-react";
+import { Package, ChevronDown, MoreVertical, Plus, Trash2, Loader2, ImageOff, ImagePlus, X, Pencil, Layers, TrendingUp, Boxes, Wallet, PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { PageShell, PageHero, SurfaceCard } from "@/components/layout/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   listWebsiteProducts, setProductPublished, uploadProductImage,
   upsertWebsiteProduct, deleteWebsiteProduct, deleteProductImage,
@@ -59,29 +60,6 @@ function totalQty(p: WebsiteProductDTO) {
     }
   }
   return { qty, known };
-}
-
-/** Compact summary tile above the table. */
-function StatTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <SurfaceCard className="flex items-center gap-3 p-4">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-brand text-primary-foreground shadow-glow">
-        {icon}
-      </span>
-      <span className="flex flex-col">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
-        <span className="text-lg font-bold leading-tight">{value}</span>
-      </span>
-    </SurfaceCard>
-  );
 }
 
 function ProductsPage() {
@@ -283,136 +261,32 @@ function vKey(color: unknown, size: unknown) {
   return `${n(color)}|${n(size)}`;
 }
 
-/** Inner table: one row per colour + size with quantity, sold, remaining and images. */
-function VariantSubTable({
-  product,
-  sales,
-  onAddStock,
-}: {
-  product: WebsiteProductDTO;
-  sales: ProductSalesDTO | undefined;
-  onAddStock: (variantIndex: number) => void;
-}) {
-  const byColorId = new Map<string, typeof product.images>();
-  const bySizeId = new Map<string, typeof product.images>();
-  const generic: typeof product.images = [];
-  for (const img of product.images) {
-    if (img.color_id) {
-      const arr = byColorId.get(img.color_id) ?? [];
-      arr.push(img);
-      byColorId.set(img.color_id, arr);
-    } else if (img.size_id) {
-      const arr = bySizeId.get(img.size_id) ?? [];
-      arr.push(img);
-      bySizeId.set(img.size_id, arr);
-    } else {
-      generic.push(img);
-    }
-  }
-
-  const colorByLabel = new Map(
-    product.colors.map((c) => [String(c.label ?? "").trim().toLocaleLowerCase("ar"), c]),
-  );
-  const sizeByLabel = new Map(
-    product.sizes.map((s) => [String(s.label ?? "").trim().toLocaleLowerCase("ar"), s]),
+/** Expanded variants: one chip per colour + size with remaining stock. */
+function VariantGrid({ product, sales }: { product: WebsiteProductDTO; sales: ProductSalesDTO | undefined }) {
+  const hexByLabel = new Map(
+    product.colors.map((c) => [String(c.label ?? "").trim().toLocaleLowerCase("ar"), c.hex]),
   );
   const soldByVariant = new Map((sales?.variants ?? []).map((v) => [vKey(v.color, v.size), v.sold]));
-
-  const rows = product.variants.map((v, i) => {
-    const color = colorByLabel.get(String(v.color ?? "").trim().toLocaleLowerCase("ar"));
-    const size = sizeByLabel.get(String(v.size ?? "").trim().toLocaleLowerCase("ar"));
-    const imgs =
-      (color ? byColorId.get(color.id) : undefined) ??
-      (size ? bySizeId.get(size.id) : undefined) ??
-      generic;
-    const sold = soldByVariant.get(vKey(v.color, v.size)) ?? 0;
-    const qty = v.quantity != null && Number.isFinite(Number(v.quantity)) ? Number(v.quantity) : null;
-    return { key: `v-${i}`, label: v.color, hex: color?.hex ?? null, size: v.size, qty, sold, imgs };
-  });
-
   return (
-    <div className="border-r-4 border-primary/60 bg-background/60 p-4 sm:p-5">
-      <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-        <Layers className="h-3.5 w-3.5 text-primary" />
-        تفاصيل المتغيّرات — لون × مقاس
-      </div>
-      <div className="overflow-x-auto rounded-xl border border-border/60 bg-background/80">
-        <table className="w-full text-right text-xs">
-          <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2">اللون</th>
-              <th className="px-3 py-2">المقاس</th>
-              <th className="px-3 py-2">الكمية</th>
-              <th className="px-3 py-2">المُباع</th>
-              <th className="px-3 py-2">المتبقي</th>
-              <th className="px-3 py-2">الصور</th>
-              <th className="px-3 py-2">إضافة</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/60">
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-4 text-center text-muted-foreground">
-                  لا توجد متغيّرات مسجّلة لهذا المنتج.
-                </td>
-              </tr>
-            )}
-            {rows.map((r) => {
-              // r.qty is remaining stock already; total = remaining + sold.
-              const remaining = r.qty == null ? null : Math.max(0, r.qty);
-              const totalEver = r.qty == null ? null : r.qty + r.sold;
-              return (
-                <tr key={r.key} className="transition hover:bg-muted/30">
-                  <td className="whitespace-nowrap px-3 py-2">
-                    {r.label ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
-                        {r.hex && (
-                          <span
-                            className="h-2.5 w-2.5 rounded-full border border-border/60"
-                            style={{ background: r.hex }}
-                          />
-                        )}
-                        {r.label}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    {r.size ? (
-                      <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[11px]">
-                        {r.size}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 font-semibold">
-                    {totalEver ?? <span className="text-muted-foreground">غير محدّد</span>}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-                      <TrendingUp className="h-2.5 w-2.5" />
-                      {r.sold}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    <StockPill remaining={remaining} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <ImageStrip imgs={r.imgs} label={r.label ?? undefined} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <Button size="sm" variant="secondary" className="gap-1" onClick={() => onAddStock(Number(r.key.slice(2)))}>
-                      <Plus className="h-3.5 w-3.5" /> كمية
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="grid grid-cols-2 gap-2 border-t border-border bg-muted/60 px-3 py-2.5">
+      {product.variants.map((v, i) => {
+        const qty = v.quantity != null && Number.isFinite(Number(v.quantity)) ? Number(v.quantity) : null;
+        const hex = hexByLabel.get(String(v.color ?? "").trim().toLocaleLowerCase("ar"));
+        const sold = soldByVariant.get(vKey(v.color, v.size)) ?? 0;
+        const low = qty != null && qty <= 3;
+        return (
+          <div key={i} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-card p-2 text-[11px]">
+            <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+              {hex && <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-border" style={{ background: hex }} />}
+              <span className="truncate">{[v.color, v.size].filter(Boolean).join(" / ") || "أساسي"}</span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end leading-tight">
+              <span className={`inv-num font-bold ${low ? "text-inv-warn" : ""}`}>{qty ?? "—"}</span>
+              {sold > 0 && <span className="text-[9px] text-muted-foreground">بيع {sold}</span>}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
