@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Package, Truck, PhoneCall, Globe, ArrowLeft, CreditCard,
+  Package, Truck, PhoneCall, ArrowLeft, CreditCard,
   ShoppingBag, BadgePercent, MessagesSquare, MailCheck, LayoutGrid,
 } from "lucide-react";
 
@@ -36,7 +36,6 @@ const TILES: Tile[] = [
   { to: "/orders", label: "الطلبات", description: "متابعة وتجهيز", icon: <ShoppingBag className="h-5 w-5" />, tone: "bg-dashboard-blue-soft text-dashboard-blue" },
   { to: "/conversations", label: "المحادثات", description: "تواصل مع عملائك", icon: <MessagesSquare className="h-5 w-5" />, tone: "bg-dashboard-rose-soft text-dashboard-rose" },
   { to: "/products", label: "المخزون", description: "المنتجات والكميات", icon: <Package className="h-5 w-5" />, tone: "bg-dashboard-green-soft text-dashboard-green" },
-  { to: "/published", label: "الموقع", description: "واجهة متجرك", icon: <Globe className="h-5 w-5" />, tone: "bg-dashboard-blue-soft text-dashboard-blue" },
   { to: "/offers", label: "العروض", description: "الخصومات الحالية", icon: <BadgePercent className="h-5 w-5" />, tone: "bg-dashboard-amber-soft text-dashboard-amber" },
   { to: "/shipping", label: "الشحن", description: "المناطق والتكلفة", icon: <Truck className="h-5 w-5" />, tone: "bg-dashboard-blue-soft text-dashboard-blue" },
   { to: "/settings/payment-methods", label: "الدفع", description: "طرق استلام المال", icon: <CreditCard className="h-5 w-5" />, tone: "bg-dashboard-rose-soft text-dashboard-rose" },

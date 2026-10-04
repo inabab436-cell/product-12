@@ -17,7 +17,7 @@ export function PageShell({
   children: ReactNode;
   dir?: "rtl" | "ltr";
   maxWidth?: string;
-  backTo?: "/dashboard" | "/" | "/published";
+  backTo?: "/dashboard" | "/";
   backLabel?: string;
 }) {
   return (
