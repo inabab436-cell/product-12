@@ -26,7 +26,6 @@ import { Route as ApiVisitorRouteImport } from './routes/api/visitor'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as ChatSlugRouteImport } from './routes/chat.$slug'
-import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as SettingsPaymentMethodsRouteImport } from './routes/settings.payment-methods'
 import { Route as CSlugIndexRouteImport } from './routes/c.$slug.index'
 import { Route as CSlugAccountRouteImport } from './routes/c.$slug.account'
@@ -117,11 +116,6 @@ const ChatSlugRoute = ChatSlugRouteImport.update({
   path: '/chat/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
-  id: '/settings/notifications',
-  path: '/settings/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsPaymentMethodsRoute = SettingsPaymentMethodsRouteImport.update({
   id: '/settings/payment-methods',
   path: '/settings/payment-methods',
@@ -161,7 +155,6 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$slug': typeof CSlugRouteWithChildren
   '/chat/$slug': typeof ChatSlugRoute
-  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/c/$slug/account': typeof CSlugAccountRoute
   '/c/$slug/track': typeof CSlugTrackRoute
@@ -184,7 +177,6 @@ export interface FileRoutesByTo {
   '/api/visitor': typeof ApiVisitorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$slug': typeof ChatSlugRoute
-  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/c/$slug/account': typeof CSlugAccountRoute
   '/c/$slug/track': typeof CSlugTrackRoute
@@ -209,7 +201,6 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/c/$slug': typeof CSlugRouteWithChildren
   '/chat/$slug': typeof ChatSlugRoute
-  '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/payment-methods': typeof SettingsPaymentMethodsRoute
   '/c/$slug/account': typeof CSlugAccountRoute
   '/c/$slug/track': typeof CSlugTrackRoute
@@ -235,7 +226,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/c/$slug'
     | '/chat/$slug'
-    | '/settings/notifications'
     | '/settings/payment-methods'
     | '/c/$slug/account'
     | '/c/$slug/track'
@@ -258,7 +248,6 @@ export interface FileRouteTypes {
     | '/api/visitor'
     | '/auth/callback'
     | '/chat/$slug'
-    | '/settings/notifications'
     | '/settings/payment-methods'
     | '/c/$slug/account'
     | '/c/$slug/track'
@@ -282,7 +271,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/c/$slug'
     | '/chat/$slug'
-    | '/settings/notifications'
     | '/settings/payment-methods'
     | '/c/$slug/account'
     | '/c/$slug/track'
@@ -307,7 +295,6 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   CSlugRoute: typeof CSlugRouteWithChildren
   ChatSlugRoute: typeof ChatSlugRoute
-  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsPaymentMethodsRoute: typeof SettingsPaymentMethodsRoute
 }
 
@@ -432,13 +419,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/notifications': {
-      id: '/settings/notifications'
-      path: '/settings/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof SettingsNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings/payment-methods': {
       id: '/settings/payment-methods'
       path: '/settings/payment-methods'
@@ -502,7 +482,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   CSlugRoute: CSlugRouteWithChildren,
   ChatSlugRoute: ChatSlugRoute,
-  SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsPaymentMethodsRoute: SettingsPaymentMethodsRoute,
 }
 export const routeTree = rootRouteImport
